@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Data</h1>
+    <div id="data"></div>
+
+    <script>
+        // Fungsi untuk mengambil data dari API
+        fetch('http://localhost:3000/api/data')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('data').innerHTML = data.message;
+            })
+            .catch(error => console.error('Error:', error));
+    </script>
+</body>
+</html>
