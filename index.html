@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification API - Modern UI</title>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9fafc;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 2rem;
+    }
+
+    /* Table Styles */
+    .table-container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 20px auto;
+      overflow-x: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background-color: #4f46e5;
+      color: #fff;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+    }
+
+    th {
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f3f4f6;
+    }
+    
+  
+    tr:hover {
+      background-color: #e5e7eb;
+    }
+    .thead:hover {
+        background-color: #084298;
+    }
+    .action-btn {
+      background-color: #4f46e5;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .action-btn:hover {
+      background-color: #4338ca;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #fff;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .modal-description {
+      font-size: 1rem;
+      margin-bottom: 20px;
+      color: #555;
+    }
+
+    .close-btn {
+      background-color: #e5e7eb;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .status-200 { background-color: #e0fcef; color: #0f5132; }
+    .status-400 { background-color: #fff3cd; color: #664d03; }
+    .status-404 { background-color: #f8d7da; color: #842029; }
+    .status-500 { background-color: #f4f4f4; color: #212529; }
+    .status-401 { background-color: #cfe2ff; color: #084298; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 10px 0;
+      margin-top: 40px;
+      font-size: 0.9rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <h1>📥 Notification List</h1>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr class="thead">
+          <th>ID</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="notifications-table">
+        <!-- Data will be inserted here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal Structure -->
+  <div id="modal" class="modal">
+    <div id="modal-content" class="modal-content">
+      <div id="modal-header" class="modal-header"></div>
+      <p id="modal-description" class="modal-description"></p>
+      <button class="close-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
+  <footer>Built with ❤️ by Kairav</footer>
+
+  <script>
+    const modal = document.getElementById('modal');
+    const modalHeader = document.getElementById('modal-header');
+    const modalDescription = document.getElementById('modal-description');
+    const modalContent = document.getElementById('modal-content');
+
+    // Fetch and display notifications
+    async function fetchNotifications() {
+      try {
+        const response = await fetch('http://localhost:3000/api/notifications');
+        if (!response.ok) throw new Error('Failed to fetch notifications');
+        
+        const data = await response.json();
+        const tableBody = document.getElementById('notifications-table');
+        tableBody.innerHTML = '';
+
+        data.forEach(notification => {
+          const row = `
+            <tr>
+              <td>${notification.id}</td>
+              <td>${notification.title}</td>
+              <td>
+                <span class="status-${notification.status}" style="padding: 4px 8px; border-radius: 4px;">
+                  ${notification.status}
+                </span>
+              </td>
+              <td>${notification.date}</td>
+              <td>
+                <button class="action-btn" onclick="showNotification(${notification.id})">View</button>
+              </td>
+            </tr>
+          `;
+          tableBody.innerHTML += row;
+        });
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    // Show notification details in modal
+    async function showNotification(id) {
+      try {
+        const response = await fetch(`http://localhost:3000/api/notifications/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch notification');
+
+        const notification = await response.json();
+
+        modalHeader.innerText = `${notification.title} (${notification.status})`;
+        modalDescription.innerText = notification.description;
+        modalContent.className = `modal-content status-${notification.status}`;
+        modal.style.display = 'flex';
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    // Close modal
+    function closeModal() {
+      modal.style.display = 'none';
+    }
+
+    // Initialize
+    fetchNotifications();
+  </script>
+</body>
+</html>
